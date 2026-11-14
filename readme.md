@@ -162,7 +162,7 @@ $$
 
 - Validación Anti-Pantalla Negra: Se muestrean 4 fotogramas del clip descargado en
   escala de grises con FFmpeg (scale=1:1,format=gray). Si el valor medio de luminancia
-  es \le 26, el video se descarta automáticamente y se descarga un sustituto.
+  es $\le 26$, el video se descarta automáticamente y se descarga un sustituto.
 
 ### Fase 7: Subtítulos Dinámicos y Render GPU (renderer.py)
 
@@ -212,9 +212,9 @@ longitudes dispares), se utiliza el Coeficiente de Solapamiento (Overlap) sobre 
 centrales:
 
 - Se normalizan las palabras con strip_accents.
-- Se extraen términos con longitud \ge 4 o que contengan números identificadores de
+- Se extraen términos con longitud $\ge 4$ o que contengan números identificadores de
   producto (ej: 5090, ps5, gta6).
-- Si dos noticias comparten \ge 2 entidades clave o el ratio:
+- Si dos noticias comparten $\ge 2$ entidades clave o el ratio:
 
 $$
 \text{Overlap}(A, B) = \frac{|A \cap B|}{\min(|A|, |B|)} \ge 0.45
@@ -325,7 +325,7 @@ filtro de video:
 
 #### 3. En app/static/index.html:
 
-- Agrega la opción dentro del selector <select id="cfg-tts-engine">.
+- Agrega la opción dentro del selector `<select id="cfg-tts-engine">`.
 
 ### ¿Cómo agregar un nuevo proveedor de video de stock?
 
@@ -354,11 +354,13 @@ filtro de video:
 
 #### 1. Abre app/recommender.py en la función analyze_clickbait().
 
-#### 2. Puedes ajustar los puntajes asignados a cada regla en las variables score +=
-X o incorporar nuevas expresiones regulares a la lista CLICKBAIT_PATTERNS.
+#### 2. Ajustar puntajes
 
-#### 3. Para modificar los rangos de clasificación, cambia los umbrales de decisión
-(final_score >= 58 para rojo y final_score >= 32 para amarillo).
+Puedes ajustar los puntajes asignados a cada regla en las variables `score += X` o incorporar nuevas expresiones regulares a la lista CLICKBAIT_PATTERNS.
+
+#### 3. Modificar los rangos de clasificación
+
+Cambia los umbrales de decisión (`final_score >= 58` para rojo y `final_score >= 32` para amarillo).
 
 ## 6. Requisitos del Sistema y Dependencias
 
