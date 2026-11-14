@@ -4,6 +4,8 @@ Este proyecto lo hice para fines personales, el proyecto no provee ningún binar
 fuentes RSS son de acceso público.
 
 🇦🇷 ¡Este proyecto poco útil pero innovador está hecho en ARGENTINA! VAMOOOOOOO 🇦🇷
+<img width="447" height="447" alt="image" src="https://github.com/user-attachments/assets/1bc2114d-a0dc-43c5-9d80-6152a02fa3f6" />
+
 
 En realidad el proyecto es muy simple, no tiene ninguna función de IA adentro, todo es puro
 Python.
