@@ -4,7 +4,6 @@ Este proyecto lo hice para fines personales, el proyecto no provee ningún binar
 fuentes RSS son de acceso público.
 
 🇦🇷 ¡Este proyecto poco útil pero innovador está hecho en ARGENTINA! VAMOOOOOOO 🇦🇷
-<img width="447" height="447" alt="image" src="https://github.com/user-attachments/assets/16262ab7-d7a2-4707-bf89-7b6315da55b7" />
 
 En realidad el proyecto es muy simple, no tiene ninguna función de IA adentro, todo es puro
 Python.
@@ -310,9 +309,9 @@ filtro de video:
 
 ## 5. Guía para Modificar y Extender el Proyecto
 
-¿Cómo agregar un nuevo motor de voz (ej: ElevenLabs o Piper local)?
+### ¿Cómo agregar un nuevo motor de voz (ej: ElevenLabs o Piper local)?
 
-## 1. En app/tts.py:
+#### 1. En app/tts.py:
 
 - Agrega el identificador del motor en list_available_voices(engine).
 - Crea la función de síntesis correspondiente (ej: synthesize_with_elevenlabs(text,
@@ -320,17 +319,17 @@ filtro de video:
 - En synthesize_single_block(), agrega una condición elif eng == "tu_motor": que invoque
   tu función y genere el archivo WAV normalizado.
 
-## 2. En app/main.py:
+#### 2. En app/main.py:
 
 - En SettingsPayload, asegúrate de registrar cualquier clave de API necesaria.
 
-## 3. En app/static/index.html:
+#### 3. En app/static/index.html:
 
 - Agrega la opción dentro del selector <select id="cfg-tts-engine">.
 
-¿Cómo agregar un nuevo proveedor de video de stock?
+### ¿Cómo agregar un nuevo proveedor de video de stock?
 
-## 1. En app/clips.py:
+#### 1. En app/clips.py:
 - Implementa la función de descarga (ej: try_download_from_shutterstock(keyword,
   api_key, output_path)).
 - En acquire_validated_clip_multi_platform(), agrega el proveedor a la lista available y
@@ -338,11 +337,11 @@ filtro de video:
 - Todo video nuevo debe pasar obligatoriamente por normalize_video() para garantizar
   resolución unificada y códec YUV420p.
 
-¿Cómo cambiar la fuente o posición de los subtítulos dinámicos?
+### ¿Cómo cambiar la fuente o posición de los subtítulos dinámicos?
 
-## 1. Abre app/renderer.py en la función generate_tiktok_ass_subtitles().
+#### 1. Abre app/renderer.py en la función generate_tiktok_ass_subtitles().
 
-## 2. Modifica la línea Style: TikTokMain,...:
+#### 2. Modifica la línea Style: TikTokMain,...:
 
 - Cambia Arial Black por la fuente instalada en el sistema que prefieras (ej: Impact,
   Montserrat ExtraBold).
@@ -351,14 +350,14 @@ filtro de video:
 - Cambia \fscx118\fscy118 para aumentar o reducir el porcentaje de aumento en el pop-up
   zoom.
 
-¿Cómo calibrar la sensibilidad del detector de Clickbait?
+### ¿Cómo calibrar la sensibilidad del detector de Clickbait?
 
-## 1. Abre app/recommender.py en la función analyze_clickbait().
+#### 1. Abre app/recommender.py en la función analyze_clickbait().
 
-## 2. Puedes ajustar los puntajes asignados a cada regla en las variables score +=
+#### 2. Puedes ajustar los puntajes asignados a cada regla en las variables score +=
 X o incorporar nuevas expresiones regulares a la lista CLICKBAIT_PATTERNS.
 
-## 3. Para modificar los rangos de clasificación, cambia los umbrales de decisión
+#### 3. Para modificar los rangos de clasificación, cambia los umbrales de decisión
 (final_score >= 58 para rojo y final_score >= 32 para amarillo).
 
 ## 6. Requisitos del Sistema y Dependencias
@@ -381,19 +380,21 @@ Licencia MIT, así que solo pido créditos.
 
 Para los que quieran saber cómo usar el programa:
 
-## 1. Python instalado: Primero necesitan tener Python instalado, es súper fácil y
-no voy a enseñar cómo hacerlo acá.
+1. **Python instalado:** Primero necesitan tener Python instalado. Es súper fácil y no voy a enseñar cómo hacerlo acá.
 
-## 2. Instalar librerías: Instalar todas las librerías necesarias mediante:
+2. **Instalar librerías:** Instalar todas las librerías necesarias mediante:
 
-pip install -r requirements.txt
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## 3. Ejecutar el programa: Una vez instalado, ejecutas el programa con:
+3. **Ejecutar el programa:** Una vez instalado, ejecutas el programa con:
 
-python -m uvicorn app.main:app --reload --port 8000
+   ```bash
+   python -m uvicorn app.main:app --reload --port 8000
+   ```
 
-## 4. Usar la app: Solo tendrás que abrir http://localhost:8000 en tu navegador de
-preferencia y listo.
+4. **Usar la app:** Solo tendrás que abrir `http://localhost:8000` en tu navegador de preferencia y listo.
 
 A medida que vayas scrolleando y añadiendo tus portales favoritos, el algoritmo se ajustará
 a tus intereses automáticamente y es una experiencia bastante satisfactoria.
