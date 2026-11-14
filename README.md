@@ -1,11 +1,3 @@
-Eso pasa porque en GitHub, si no hay una línea en blanco completa (un doble
-Enter) entre cada párrafo, título y lista, el sistema junta todo en una sola
-masa de texto sin saltos de línea.
-
-Aquí tienes el archivo README.md formateado con saltos de línea dobles
-estrictos, bloques de código cerrados y sintaxis Markdown limpia para que GitHub
-lo dibuje perfecto.
-
 ⚡ PressPlay
 
 Este proyecto lo hice para fines personales, el proyecto no provee ningún
