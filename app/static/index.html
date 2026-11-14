@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NewsToVideo - Suite Profesional</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span>NewsToVideo</span>
+    </div>
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="feed">Feed</button>
+      <button class="tab-btn" data-tab="saved">Guardados (<span id="saved-counter">0</span>)</button>
+      <button class="tab-btn" data-tab="muted">Temas Ocultos (<span id="muted-counter">0</span>)</button>
+      <button class="tab-btn" data-tab="generate">Generar</button>
+      <button class="tab-btn" data-tab="sources">Fuentes</button>
+      <button class="tab-btn" data-tab="settings">Ajustes</button>
+    </nav>
+  </header>
+
+  <main class="main-container">
+
+    <!-- FEED PRINCIPAL -->
+    <section id="tab-feed" class="tab-content active">
+      <div class="feed-toolbar">
+        <select id="feed-order-filter" class="select-input" style="font-weight: 700;">
+          <option value="score">🎯 Recomendados (Inteligente BM25)</option>
+          <option value="trend">🔥 Tendencias en Medios (Múltiples fuentes)</option>
+          <option value="viral">⚡ Potencialmente Virales (Debate / Impacto)</option>
+          <option value="underreported">🔍 Historias Ocultas (Poco cubiertas)</option>
+          <option value="recent">⏱️ Más Recientes</option>
+        </select>
+        <select id="feed-source-filter" class="select-input">
+          <option value="">Todas las fuentes</option>
+        </select>
+        <input type="text" id="feed-search-input" class="search-input" placeholder="Filtrar noticias..." autocomplete="off" />
+        <button id="feed-refresh-btn" class="btn-refresh" title="Sincronizar noticias frescas">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+          <span>Refrescar</span>
+        </button>
+      </div>
+
+      <div id="feed-container" class="feed-list"></div>
+      <div id="feed-skeleton" class="feed-list" style="display: none; margin-top: 1rem;">
+        <div class="skeleton-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line" style="width: 30%;"></div><div class="skeleton-line" style="width: 85%;"></div></div></div>
+      </div>
+      <div id="scroll-sentinel"></div>
+    </section>
+
+    <!-- VER MÁS TARDE -->
+    <section id="tab-saved" class="tab-content">
+      <div class="panel-card">
+        <h2 class="panel-title">Noticias Guardadas</h2>
+        <p class="panel-desc">Artículos reservados para ver más tarde. Están 100% excluidos del feed general para no repetirse.</p>
+      </div>
+      <div id="saved-container" class="feed-list"></div>
+      <div id="saved-empty-msg" class="empty-state" style="display: none;">
+        <p>No tienes noticias guardadas.</p>
+      </div>
+    </section>
+
+    <!-- TEMAS OCULTOS -->
+    <section id="tab-muted" class="tab-content">
+      <div class="panel-card">
+        <h2 class="panel-title">Ocultar Temporalmente un Tema</h2>
+        <p class="panel-desc">Cualquier noticia que contenga estas palabras en su título o resumen no aparecerá en tu feed.</p>
+        <form id="add-muted-topic-form" class="input-row">
+          <input type="text" id="muted-topic-input" class="text-input" placeholder="Ej: Nvidia, Jensen Huang, Fútbol, Trump..." required />
+          <button type="submit" class="btn-primary">Ocultar Tema</button>
+        </form>
+      </div>
+      <div class="panel-card">
+        <h2 class="panel-title">Lista de Temas Ocultos Activos</h2>
+        <div id="muted-topics-list" class="muted-tags-container" style="margin-top: 1rem;"></div>
+      </div>
+    </section>
+
+    <!-- GENERAR -->
+    <section id="tab-generate" class="tab-content">
+      <div id="render-progress-card" class="progress-card">
+        <div class="stages-tracker">
+          <div id="stage-tts" class="stage-pill">1. Locución Rules.txt</div>
+          <div id="stage-clips" class="stage-pill">2. B-Roll HD</div>
+          <div id="stage-render" class="stage-pill">3. GPU Sync</div>
+          <div id="stage-done" class="stage-pill">4. Finalizado</div>
+        </div>
+        <div class="progress-bar-bg"><div id="render-progress-fill" class="progress-bar-fill"></div></div>
+        <div class="progress-status-row"><span id="render-status-detail">Iniciando...</span><span id="render-status-percent">0%</span></div>
+        <div id="video-preview-box" class="video-preview-box"><video id="final-video-player" class="video-player" controls></video></div>
+      </div>
+
+      <div class="panel-card">
+        <label class="field-label" for="srt-input">1. Guion con Subtítulos (SRT)</label>
+        <p class="field-helper">En Modo Granular cada bloque lleva {video:...} o {imagen:...}. En Modo Bucle solo 2 a 4 momentos clave.</p>
+        <textarea id="srt-input" class="code-textarea" rows="7" placeholder="1&#10;00:00:00,000 --> 00:00:02,700&#10;{video: stop killing games petition} ¡Esto que ves cambia todo!"></textarea>
+
+        <label class="field-label" for="keywords-input">2. Palabras clave B-Roll (una por línea - solo para Modo Bucle)</label>
+        <textarea id="keywords-input" class="code-textarea" rows="3" placeholder="stop killing games petition&#10;server shutdown screen"></textarea>
+
+        <button id="btn-start-generate" class="btn-generate-big">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span id="btn-generate-text">Generate Video</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- FUENTES RSS -->
+    <section id="tab-sources" class="tab-content">
+      <div class="panel-card">
+        <h2 class="panel-title">Agregar Feed RSS</h2>
+        <form id="add-source-form" class="input-row">
+          <input type="text" id="source-url-input" class="text-input" placeholder="https://sitio.com/feed" required />
+          <button type="submit" id="add-source-btn" class="btn-primary">Agregar Fuente</button>
+        </form>
+      </div>
+      <div class="panel-card">
+        <h2 class="panel-title">Fuentes Activas (<span id="sources-count">0</span>)</h2>
+        <div id="sources-container" class="sources-list" style="margin-top: 1rem;"></div>
+      </div>
+    </section>
+
+    <!-- AJUSTES (TARJETAS INDEPENDIENTES CON BORDES VISIBLES) -->
+    <section id="tab-settings" class="tab-content">
+      <div class="settings-container">
+
+        <!-- TARJETA 1: VOZ Y REGLAS TXT -->
+        <div class="panel-card">
+          <div class="card-header-styled">
+            <span class="card-badge">01</span>
+            <div>
+              <h2 class="panel-title">Voz, Narración y Reglas Estrictas</h2>
+              <p class="panel-desc">Sintetizador y velocidad. Las reglas obligatorias se leen directamente desde <code>rules.txt</code>.</p>
+            </div>
+          </div>
+          <hr class="card-divider">
+          
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label">Motor de Síntesis</label>
+              <select id="cfg-tts-engine" class="select-input w-full">
+                <option value="qwen" selected>Qwen-TTS (CosyVoice - Tono Humano)</option>
+                <option value="edge">Edge TTS (Microsoft Online)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Voz Activa</label>
+              <select id="tts-voice-select" class="select-input w-full"></select>
+            </div>
+          </div>
+
+          <div class="form-grid-2" style="margin-top: 1rem;">
+            <div>
+              <label class="field-label">Estilo de Locución</label>
+              <select id="cfg-qwen-style" class="select-input w-full">
+                <option value="youtube_energetic" selected>Dinámico (YouTube Retención)</option>
+                <option value="sarcastic_tech">Sarcástico e Irónico</option>
+                <option value="cinematic_mystery">Misterio y Tensión</option>
+                <option value="casual_friend">Conversacional Cercano</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Velocidad de Habla</label>
+              <select id="cfg-tts-speed" class="select-input w-full">
+                <option value="+0%">Normal (1.0x)</option>
+                <option value="+8%" selected>Dinámica (+8% Calibrada)</option>
+                <option value="+15%">Rápida (+15%)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="preview-bar-styled">
+            <button id="btn-preview-voice" type="button" class="btn-secondary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              <span id="btn-preview-voice-text">Escuchar Muestra con Rules.txt</span>
+            </button>
+            <span id="preview-audio-status" class="hint-text"></span>
+          </div>
+        </div>
+
+        <!-- TARJETA 2: MODO DE VIDEO, CALIDAD Y SUBTÍTULOS TIKTOK -->
+        <div class="panel-card">
+          <div class="card-header-styled">
+            <span class="card-badge">02</span>
+            <div>
+              <h2 class="panel-title">Modo de Video y Subtítulos Dinámicos</h2>
+              <p class="panel-desc">Configuración del montaje y subtítulos animados estilo TikTok / Reels sincronizados por GPU.</p>
+            </div>
+          </div>
+          <hr class="card-divider">
+
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label">Modo Visual</label>
+              <select id="cfg-video-mode" class="select-input w-full">
+                <option value="loop" selected>Bucle General de B-Roll Temático (Recomendado)</option>
+                <option value="granular_srt">Modo Granular (Un clip/imagen por cada frase SRT)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Resolución de Salida</label>
+              <select id="cfg-video-quality" class="select-input w-full">
+                <option value="480p">480p (854x480)</option>
+                <option value="720p" selected>720p HD (1280x720)</option>
+                <option value="1080p">1080p Full HD (1920x1080)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- CONTROLES EXCLUSIVOS DE SUBTÍTULOS TIKTOK -->
+          <div style="margin-top: 1.25rem; background: #18181b; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+              <label class="checkbox-row" style="font-weight: 700; color: #fff;">
+                <input type="checkbox" id="cfg-enable-tiktok-subs" checked />
+                <span>Activar Subtítulos Dinámicos estilo TikTok / Reels</span>
+              </label>
+            </div>
+            <p class="panel-desc" style="margin-top: 0; margin-bottom: 0.75rem;">
+              Las palabras se agrandan ligeramente (+15%) y cambian de color al ser pronunciadas, sincronizadas con el SRT.
+            </p>
+            <div class="form-grid-2">
+              <div>
+                <label class="field-label">Color de Resaltado Activo</label>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <input type="color" id="cfg-sub-highlight-picker" value="#FFE600" style="width: 44px; height: 36px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; cursor: pointer;" />
+                  <select id="cfg-sub-highlight-select" class="select-input" style="flex: 1;">
+                    <option value="#FFE600" selected>Amarillo TikTok (#FFE600)</option>
+                    <option value="#00E5FF">Cian Eléctrico (#00E5FF)</option>
+                    <option value="#00FF66">Verde Neón (#00FF66)</option>
+                    <option value="#FF0055">Magenta / Fucsia (#FF0055)</option>
+                    <option value="#FFFFFF">Blanco Puro (#FFFFFF)</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="field-label">Clips en Bucle (Solo Modo Bucle)</label>
+                <input type="number" id="cfg-loop-clips-count" class="text-input w-full" value="15" min="3" max="30" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TARJETA 3: EXPLORACIÓN CONTROLADA DEL FEED -->
+        <div class="panel-card">
+          <div class="card-header-styled">
+            <span class="card-badge">03</span>
+            <div>
+              <h2 class="panel-title">Exploración Controlada del Feed</h2>
+              <p class="panel-desc">Distribución porcentual matemática (deben sumar 100%).</p>
+            </div>
+          </div>
+          <hr class="card-divider">
+
+          <div class="form-grid-3">
+            <div>
+              <label class="field-label">🎯 Intereses (%)</label>
+              <input type="number" id="cfg-exp-personal" class="text-input w-full" value="70" min="10" max="90" />
+            </div>
+            <div>
+              <label class="field-label">🔗 Relacionados (%)</label>
+              <input type="number" id="cfg-exp-related" class="text-input w-full" value="20" min="5" max="50" />
+            </div>
+            <div>
+              <label class="field-label">✨ Descubrimiento (%)</label>
+              <input type="number" id="cfg-exp-discovery" class="text-input w-full" value="10" min="5" max="40" />
+            </div>
+          </div>
+        </div>
+
+        <!-- TARJETA 4: FUENTES DE B-ROLL Y APIS -->
+        <div class="panel-card">
+          <div class="card-header-styled">
+            <span class="card-badge">04</span>
+            <div>
+              <h2 class="panel-title">Fuentes de Video Habilitadas</h2>
+              <p class="panel-desc">Se probarán automáticamente en secuencia si un video resulta ser pantalla negra.</p>
+            </div>
+          </div>
+          <hr class="card-divider">
+
+          <div class="checkbox-list">
+            <label class="checkbox-row"><input type="checkbox" id="cfg-enable-yt" checked /> <span>YouTube (Query Crafting anti-basura activo)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="cfg-enable-wm" checked /> <span>Wikimedia Commons Video</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="cfg-enable-pxb" /> <span>Pixabay Video API</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="cfg-enable-pxl" /> <span>Pexels Video API</span></label>
+          </div>
+
+          <div class="form-grid-2" style="margin-top: 1rem;">
+            <div>
+              <label class="field-label">Pixabay API Key</label>
+              <input type="text" id="cfg-pixabay-key" class="text-input w-full" placeholder="Clave Pixabay..." />
+            </div>
+            <div>
+              <label class="field-label">Pexels API Key</label>
+              <input type="text" id="cfg-pexels-key" class="text-input w-full" placeholder="Clave Pexels..." />
+            </div>
+          </div>
+        </div>
+
+        <!-- TARJETA 5: RUTAS DEL SISTEMA -->
+        <div class="panel-card">
+          <div class="card-header-styled">
+            <span class="card-badge">05</span>
+            <div>
+              <h2 class="panel-title">Rutas de Salida y Música</h2>
+              <p class="panel-desc">Carpetas locales en tu disco duro (soporta rutas absolutas como H:/ytAI).</p>
+            </div>
+          </div>
+          <hr class="card-divider">
+
+          <div class="form-grid-2">
+            <div>
+              <label class="field-label">Directorio de Salida</label>
+              <input type="text" id="cfg-output-dir" class="text-input w-full" value="output" />
+            </div>
+            <div>
+              <label class="field-label">Música de Fondo</label>
+              <input type="text" id="cfg-music-dir" class="text-input w-full" value="music" />
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-save-settings" class="btn-primary w-full" style="padding: 0.95rem; font-size: 0.95rem; font-weight: 700; margin-bottom: 2rem;">
+          Guardar Todos los Ajustes
+        </button>
+
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Modal Duración con Botón Estilizado -->
+  <div id="duration-modal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Copiar Prompt para Video</h3>
+          <p id="modal-article-title" class="modal-subtitle">Título...</p>
+        </div>
+        <button id="btn-close-modal" class="btn-modal-close">✕</button>
+      </div>
+      <form id="duration-form">
+        <div class="modal-body">
+          <label for="duration-input-field" class="duration-label">Duración sugerida (calculada sin relleno)</label>
+          <input type="text" id="duration-input-field" class="duration-input" required />
+          <p id="modal-duration-hint" class="duration-help" style="color: #60a5fa; font-weight: 500;"></p>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-modal" class="btn-secondary">Cancelar</button>
+          <button type="submit" id="btn-submit-modal" class="btn-primary btn-submit-prompt">
+            <span id="btn-submit-modal-text">Copiar al portapapeles</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
