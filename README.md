@@ -1,3 +1,11 @@
+Eso pasa porque en GitHub, si no hay una línea en blanco completa (un doble
+Enter) entre cada párrafo, título y lista, el sistema junta todo en una sola
+masa de texto sin saltos de línea.
+
+Aquí tienes el archivo README.md formateado con saltos de línea dobles
+estrictos, bloques de código cerrados y sintaxis Markdown limpia para que GitHub
+lo dibuje perfecto.
+
 ⚡ PressPlay
 
 Este proyecto lo hice para fines personales, el proyecto no provee ningún
@@ -7,11 +15,12 @@ binario y las fuentes RSS son de acceso público.
 🇦🇷
 
 En realidad el proyecto es muy simple, no tiene ninguna función de IA adentro,
-todo es puro Python. Lo que sí tiene IA, además del SRT que genera la IA
-mediante el prompt que te proporciona el programa, es el programa en sí. Aunque
-yo no programé el código a mano línea por línea, sí se me ocurrió la idea
-principal y fui quien dio todas las instrucciones para lograr un programa pulido
-y con un buen algoritmo.
+todo es puro Python.
+
+Lo que sí tiene IA, además del SRT que genera la IA mediante el prompt que te
+proporciona el programa, es el programa en sí. Aunque yo no programé el código a
+mano línea por línea, sí se me ocurrió la idea principal y fui quien dio todas
+las instrucciones para lograr un programa pulido y con un buen algoritmo.
 
 Así que, como no soy un experto en Python, a continuación voy a dejar el texto
 que dejó la IA para cualquiera que quiera forkear el proyecto y modificarlo para
@@ -37,11 +46,13 @@ El sistema resuelve tres problemas críticos en la automatización de video:
     dura lo mismo que el texto plano. PressPlay mide los milisegundos reales de
     la voz y recalcula la línea de tiempo antes de montar el video y los
     subtítulos.
+
 2.  La degradación visual por rate-limiting: La descarga masiva de fragmentos de
     video suele provocar bloqueos de IP (HTTP 429) o descargas de imágenes
     estáticas disfrazadas de video. PressPlay implementa rotación de
     proveedores, cliente Android en yt-dlp y validación de fotogramas negros en
     FFmpeg.
+
 3.  El sesgo y la duplicación informativa: En lugar de mostrar 20 artículos
     idénticos sobre el mismo tema, el motor agrupa las noticias por solapamiento
     de entidades clave (Clustering) y filtra el sensacionalismo mediante un
@@ -92,6 +103,7 @@ Fase 1: Ingesta y Sincronización de Fuentes (feed.py)
 
   - Se consultan concurrentemente todas las fuentes activas en la tabla sources
     utilizando concurrent.futures.ThreadPoolExecutor(max_workers=6).
+
   - Se normalizan fechas en formato ISO y se descargan los thumbnails en disco
     bajo cache/images/{hash}.jpg para evitar enlaces rotos o bloqueos por
     hotlinking.
@@ -101,8 +113,10 @@ Fase 2: Normalización, Filtrado y Clustering (recommender.py)
   - Filtro de Temas Ocultos: Se eliminan acentos y diacríticos con unicodedata
     tanto en los términos bloqueados como en los textos de los artículos. Si hay
     coincidencia, el artículo se descarta antes de llegar a memoria.
+
   - Exclusión de Guardados: Artículos almacenados en saved_articles o que hablen
     del mismo evento quedan excluidos del feed general.
+
   - Clustering: Se extraen conjuntos de entidades (extract_core_entities). Si
     dos noticias comparten 2 o más entidades específicas o superan un 45% de
     solapamiento (Overlap Coefficient), se unifican bajo una sola tarjeta
@@ -120,8 +134,11 @@ Fase 4: Extracción y Cálculo de Duración (extractor.py y prompt_builder.py)
   - Al hacer clic en "Copiar para Video", el backend descarga el contenido
     completo del artículo con trafilatura. Si hay muro de pago, recurre a
     selectores BeautifulSoup de respaldo o al resumen provisto por el RSS.
+
   - Se cuenta el número real de palabras útiles y se calcula la duración exacta:
-    \text{Duración (segundos)} = \max\left(45, \text{round}\left(\frac{\text{Palabras}}{3.2}\right)\right)
+
+\text{Duración (segundos)} = \max\left(45, \text{round}\left(\frac{\text{Palabras}}{3.2}\right)\right)
+
   - Si en Ajustes está activo el Modo Granular, prompt_builder.py reescribe el
     bloque de salida para obligar a la IA a incluir {video: ...} o {imagen: ...}
     en cada línea del SRT con un máximo de 2 usos por recurso.
@@ -130,10 +147,13 @@ Fase 5: Locución y Medición de Tiempo Real (tts.py)
 
   - Se divide el SRT en bloques. Cada bloque de texto se procesa con Qwen-TTS o
     Edge TTS inyectando las directivas de rules.txt.
+
   - Cada fragmento de audio se exporta a WAV mono a 44.1 kHz.
+
   - Punto crítico de sincronización: El sistema lee la cabecera WAV de cada
     archivo (wave.open), obtiene el número exacto de frames y calcula la
     duración real en milisegundos (actual_dur = frames / 44100.0).
+
   - Se genera una estructura de datos llamada synced_blocks, donde cada bloque
     tiene un start y un end basados en el audio real pronunciado, no en los
     timestamps del texto original.
@@ -143,10 +163,12 @@ Fase 6: Adquisición de B-Roll Resiliente (clips.py)
   - Query Crafting: Para evitar videos con webcams o podcasts, la búsqueda en
     YouTube se transforma agregando modificadores visuales (footage, showcase,
     b-roll) y negando ruido (-podcast -reaction -streamer).
+
   - Evasión de Bloqueos (Rate Limiting): yt-dlp invoca el cliente Android/TV
     (--extractor-args "youtube:player_client=android"), aplica jitter aleatorio
     y, en Modo Granular, rota entre proveedores (YouTube, Pexels, Pixabay,
     Wikimedia).
+
   - Validación Anti-Pantalla Negra: Se muestrean 4 fotogramas del clip
     descargado en escala de grises con FFmpeg (scale=1:1,format=gray). Si el
     valor medio de luminancia es \le 26, el video se descarta automáticamente y
@@ -155,10 +177,12 @@ Fase 6: Adquisición de B-Roll Resiliente (clips.py)
 Fase 7: Subtítulos Dinámicos y Render GPU (renderer.py)
 
   - Se generan subtítulos en formato Advanced SubStation Alpha (.ass):
+
       - Cada bloque de audio se fragmenta en ráfagas cortas de 2 a 3 palabras.
       - Se aplica tipografía de impacto (48px, negrita, borde negro de 4px).
       - La palabra hablada en cada micro-fracción de tiempo se agranda un 18%
         (\fscx118\fscy118) y adopta el color de resaltado configurado.
+
   - Se llama a FFmpeg con el códec acelerado por hardware NVIDIA (-c:v
     h264_nvenc -preset p4 -cq 23), integrando música de fondo opcional con
     atenuación (ducking) al 10%.
@@ -205,9 +229,11 @@ títulos de longitudes dispares), se utiliza el Coeficiente de Solapamiento
   - Se extraen términos con longitud \ge 4 o que contengan números
     identificadores de producto (ej: 5090, ps5, gta6).
   - Si dos noticias comparten \ge 2 entidades clave o el ratio:
-    \text{Overlap}(A, B) = \frac{|A \cap B|}{\min(|A|, |B|)} \ge 0.45
-    se consideran el mismo acontecimiento y se agrupan en una única estructura
-    de clúster.
+
+\text{Overlap}(A, B) = \frac{|A \cap B|}{\min(|A|, |B|)} \ge 0.45
+
+se consideran el mismo acontecimiento y se agrupan en una única estructura de
+clúster.
 
 app/tts.py
 
@@ -298,15 +324,20 @@ través del filtro de video:
 ¿Cómo agregar un nuevo motor de voz (ej: ElevenLabs o Piper local)?
 
 1.  En app/tts.py:
+
       - Agrega el identificador del motor en list_available_voices(engine).
       - Crea la función de síntesis correspondiente (ej:
         synthesize_with_elevenlabs(text, voice_id, out_wav)).
       - En synthesize_single_block(), agrega una condición elif eng ==
         "tu_motor": que invoque tu función y genere el archivo WAV normalizado.
+
 2.  En app/main.py:
+
       - En SettingsPayload, asegúrate de registrar cualquier clave de API
         necesaria.
+
 3.  En app/static/index.html:
+
       - Agrega la opción dentro del selector <select id="cfg-tts-engine">.
 
 ¿Cómo agregar un nuevo proveedor de video de stock?
@@ -322,7 +353,9 @@ través del filtro de video:
 ¿Cómo cambiar la fuente o posición de los subtítulos dinámicos?
 
 1.  Abre app/renderer.py en la función generate_tiktok_ass_subtitles().
+
 2.  Modifica la línea Style: TikTokMain,...:
+
       - Cambia Arial Black por la fuente instalada en el sistema que prefieras
         (ej: Impact, Montserrat ExtraBold).
       - Ajusta margin_v para cambiar la altura vertical en pantalla (un valor
@@ -333,8 +366,10 @@ través del filtro de video:
 ¿Cómo calibrar la sensibilidad del detector de Clickbait?
 
 1.  Abre app/recommender.py en la función analyze_clickbait().
+
 2.  Puedes ajustar los puntajes asignados a cada regla en las variables score +=
     X o incorporar nuevas expresiones regulares a la lista CLICKBAIT_PATTERNS.
+
 3.  Para modificar los rangos de clasificación, cambia los umbrales de decisión
     (final_score >= 58 para rojo y final_score >= 32 para amarillo).
 
@@ -361,18 +396,25 @@ Para los que quieran saber cómo usar el programa:
 
 1.  Python instalado: Primero necesitan tener Python instalado, es súper fácil y
     no voy a enseñar cómo hacerlo acá.
+
 2.  Instalar librerías: Instalar todas las librerías necesarias mediante:
+
     pip install -r requirements.txt
+
 3.  Ejecutar el programa: Una vez instalado, ejecutas el programa con:
+
     python -m uvicorn app.main:app --reload --port 8000
+
 4.  Usar la app: Solo tendrás que abrir http://localhost:8000 en tu navegador de
     preferencia y listo.
 
 A medida que vayas scrolleando y añadiendo tus portales favoritos, el algoritmo
 se ajustará a tus intereses automáticamente y es una experiencia bastante
-satisfactoria. Eso sí: si eliges el Modo Granular (que descarga un clip por cada
-frase y no genera un bucle de videos), la generación del video podría demorarse
-entre 10 a 30 minutos dependiendo de la duración de este.
+satisfactoria.
+
+Eso sí: si eliges el Modo Granular (que descarga un clip por cada frase y no
+genera un bucle de videos), la generación del video podría demorarse entre 10
+a 30 minutos dependiendo de la duración de este.
 
 📄 Licencia
 
